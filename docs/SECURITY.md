@@ -1,19 +1,17 @@
-# Security notes
+# Security Model
 
-## Threat model
+`trysac-browser-task-recorder` is designed to prevent credential leaks and code injection.
 
-`trysac-browser-task-recorder` is a pure library without I/O. The main risks are:
+## Defended Threats
 
-- **Supply chain**: a compromised dependency or CI action. Mitigation: no runtime dependencies,
-  Dependabot weekly updates, actions pinned to major versions, minimal workflow permissions.
-- **Leaked secrets**: tokens committed by mistake. Mitigation: `gitleaks` runs in the local gates
-  and in CI; `.env` files are git-ignored.
-- **Untrusted input**: callers may pass hostile strings. Mitigation: validate input and fail with
-  explicit exceptions; never `eval`, `exec` or deserialize untrusted data.
+- **Insecure URL Schemes**: Navigation actions strictly reject non-HTTP(S) schemes (e.g., `javascript:`, `file:`, `data:`). These raise `RecorderError('unsafe_url').
+- **Secret Exposure**: Any `fill` step with a selector matching `(?i)password|passwd|pin|otp|token|secret` or explicitly marked `secret=True` is automatically redacted. The value is replaced by `os.environ[<secret_env_prefix>+n]`.
+- **Injection Attacks**: All inputs (selectors, URLs, values) are emitted in the generated script using Python's `repr()`. This ensures input cannot escape its literal bounds.
 
-## Publishing
+## Not Defended / Limits
 
-Releases are published to PyPI with trusted publishing (OIDC) when available, never with a
-long-lived token stored in the repository.
-
-To report a vulnerability, see [SECURITY.md](../SECURITY.md).
+- **Resource Exhaustion**: The library enforces limits to prevent memory exhaustion:
+  - `max_bytes`: 5,000,000 bytes.
+  - `max_steps`: 10,000 steps.
+  - Exceeding these raises `RecorderError('too_large').
+- **Execution Environment**: This library does not validate the security of the resulting script when executed; it is the user's responsibility to handle the generated Python file safely.

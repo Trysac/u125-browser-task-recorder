@@ -1,48 +1,51 @@
-# browser-task-recorder
+# trysac-browser-task-recorder
 
-[![PyPI version](https://img.shields.io/pypi/v/trysac-browser-task-recorder)](https://pypi.org/project/trysac-browser-task-recorder/)
-[![License: MIT](https://img.shields.io/pypi/l/trysac-browser-task-recorder)](LICENSE)
-[![CI](https://github.com/Trysac/u125-browser-task-recorder/actions/workflows/ci.yml/badge.svg)](https://github.com/Trysac/u125-browser-task-recorder/actions/workflows/ci.yml)
+Turn recorded browser steps, including Chrome DevTools Recorder JSON exports, into reproducible Playwright Python scripts with safe literals and secrets moved to environment variables.
 
-Turn recorded browser steps, including Chrome DevTools Recorder JSON exports, into reproducible Playwright Python scripts with safe literals and secrets moved to environment variables
+## The Problem
 
-## Problem
+Browser tasks for agents and tests are often recorded once by hand, but recordings leak typed passwords into scripts, contain redundant keystrokes and use selector syntaxes Playwright does not understand. Converting a recording into a clean, reproducible script should be deterministic and safe. This library normalises recorded steps and generates a Playwright script with every value emitted as a safe literal.
 
-Describe in two or three sentences the concrete problem this utility solves, who hits it, and what
-they do today without it. Replace this paragraph when the first real feature lands.
+## Installation
 
-## Install
-
-```sh
+```bash
 pip install trysac-browser-task-recorder
-# or
-uv add trysac-browser-task-recorder
 ```
 
-Requires Python 3.10 or newer. No runtime dependencies.
-
-## Usage
+## Usage Example
 
 ```python
-import browser_task_recorder
+from browser_task_recorder import Recording, Step, to_playwright_python
 
-# normalize() trims surrounding whitespace and lower-cases the text.
-print(browser_task_recorder.normalize("  Hello World "))  # -> "hello world"
-
-# Blank input is rejected explicitly instead of returning an empty string.
-try:
-    browser_task_recorder.normalize("   ")
-except ValueError as exc:
-    print(f"rejected: {exc}")
+rec = Recording(
+    title="Login",
+    steps=(
+        Step(kind="goto", url="https://example.com/login"),
+        Step(kind="fill", selector="#password", value="hunter2"),
+    ),
+)
+# Generates a script with os.environ['RECORDER_SECRET_1']
+script = to_playwright_python(rec)
+print(script)
 ```
 
-## Documentation
+## API Summary
 
-- [Architecture](docs/ARCHITECTURE.md) and [decisions](docs/decisions/)
-- [Testing](docs/TESTING.md) and [security](docs/SECURITY.md)
-- [Project record](docs/PROJECT.md) and [stack](docs/STACK.md)
-- [Changelog](CHANGELOG.md) and [contributing guide](CONTRIBUTING.md)
+### Core Classes
+- `Recording`: A container for `title`, `steps` (tuple of `Step`), `viewport`, and `warnings`.
+- `Step`: Defines `kind` (goto, click, fill, press, select, check, wait_for), `selector`, `value`, `url`, `key`, `secret`, and `double_click`.
+- `RecorderError`: Raised on failures with codes `unsafe_url`, `too_large`, `invalid_recording`.
 
-## License
+### Functions
+- `load_recording(text: str, *, max_bytes=5_000_000, max_steps=10_000) -> Recording`: Parses input text; detects DevTools or native formats.
+- `from_devtools(data: Mapping) -> Recording`: Parses Chrome DevTools JSON exports.
+- `normalize(steps: Sequence[Step]) -> list[Step]`: Collapses redundant fills and navigations.
+- `to_playwright_python(recording: Recording, *, headless=True, secret_env_prefix='RECORDER_SECRET_') -> str`: Generates the Python script.
 
-[MIT](LICENSE) (c) 2026 Miguel Gomez
+## Why not playwright codegen?
+
+Playwright codegen requires a live browser session and does not support safe secret management. This library works offline on existing recordings and never writes typed secrets to disk.
+
+## Security
+
+See [docs/SECURITY.md](docs/SECURITY.md).

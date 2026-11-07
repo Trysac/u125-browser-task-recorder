@@ -9,4 +9,5 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- * Initial release: parse DevTools Recorder JSON and native recordings into reproducible Playwright Python scripts with secret masking.
 - Initial project structure from the factory utility template.

@@ -1,29 +1,11 @@
 # Architecture
 
-## Purpose
+`trysac-browser-task-recorder` converts browser interaction sessions into reproducible, secure Playwright Python automation scripts.
 
-`trysac-browser-task-recorder` is a small, dependency-free Python library: Turn recorded browser steps, including Chrome DevTools Recorder JSON exports, into reproducible Playwright Python scripts with safe literals and secrets moved to environment variables
+## Component Overview
 
-## Shape
-
-```text
-caller code --> browser_task_recorder (public API in __init__.py)
-                    |
-                    +-- pure functions, no I/O, no global state
-```
-
-- **Public API**: the names listed in `__all__` of `src/browser_task_recorder/__init__.py`. Anything else is
-  internal and may change without a major version.
-- **Errors**: invalid input raises built-in exceptions (`ValueError`, `TypeError`) with a clear
-  message; the library never prints or exits.
-- **Side effects**: none. If a feature needs I/O, isolate it in its own module behind a small
-  interface and record the choice in an ADR.
-
-## Quality contract
-
-`scripts/check.py` is the single definition of the gates; `fabrica.json` tells the factory and CI
-how to run it. See [TESTING.md](TESTING.md).
-
-## Decisions
-
-Architecture decisions are recorded in [decisions/](decisions/) as numbered ADRs.
+1. **Data Model (`Step`, `Recording`)**: Immutable dataclasses describing browser actions such as `goto`, `click`, `fill`, `press`, `select`, `check`, and `wait_for`.
+2. **Parsers (`load_recording`, `from_devtools`)**: Ingest either Chrome DevTools Recorder JSON exports or a native JSON recording structure. Safely validates input size, schemes, and data shapes.
+3. **Normalizer (`normalize`)**: Pure transformation function merging consecutive keystrokes on the same selector and removing duplicate consecutive navigation calls.
+4. **Code Generator (`to_playwright_python`)**: Deterministic script emitter using Python's `repr()` for all string literals. Automatically intercepts sensitive input fields (e.g. selectors matching `(?i)password|passwd|pin|otp|token|secret`) and substitutes them with environment variable lookups.
+5. **Command Line Interface (`__main__.py`)**: Thin entry point that processes recording files, prints warnings to `stderr`, and streams or writes the generated Playwright code.
