@@ -19,6 +19,9 @@ classifiers = [
 ]
 dependencies = []
 
+[project.scripts]
+browser-task-recorder = "browser_task_recorder.__main__:main"
+
 [project.urls]
 Homepage = "https://github.com/Trysac/u125-browser-task-recorder"
 Source = "https://github.com/Trysac/u125-browser-task-recorder"

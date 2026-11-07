@@ -3,18 +3,20 @@
 ## Running
 
 ```sh
-uv run pytest --cov=browser_task_recorder   # tests with coverage report
-uv run python scripts/check.py      # every gate, as CI and the factory run it
+uv run pytest --cov=browser_task_recorder
+uv run python scripts/check.py
 ```
 
-## Policy
+## Coverage
 
-- Branch coverage of `src/browser_task_recorder` must stay at or above 80 %; the gate fails below it.
-- Tests exercise the public API (`import browser_task_recorder`) and assert every observable effect:
-  return values, raised exceptions and their messages.
-- Each bug fix starts with a failing test that reproduces it.
-- Tests are deterministic: no network, no wall clock, no dependence on test order.
+- Branch coverage must remain at or above 80%.
 
-## Layout
+## Test Suite Structure
 
-`tests/test_<module>.py` mirrors each public module. Shared fixtures go in `tests/conftest.py`.
+- `tests/test_browser_task_recorder.py`: Covers the acceptance criteria:
+  - Acceptance of DevTools Recorder JSON input format.
+  - Normalization of steps (merging fills, dropping duplicate gotos).
+  - Proper redaction of secrets into `os.environ` references.
+  - Generation of byte-exact golden script outputs.
+  - Proper `RecorderError` raising for invalid inputs, large files, and unsafe URLs.
+  - AST parsing validation for generated literals.
