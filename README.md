@@ -8,8 +8,10 @@ Browser tasks for agents and tests are often recorded once by hand, but recordin
 
 ## Installation
 
+Not published to PyPI yet. Install it from GitHub:
+
 ```bash
-pip install trysac-browser-task-recorder
+pip install "git+https://github.com/Trysac/u125-browser-task-recorder"
 ```
 
 ## Usage Example
